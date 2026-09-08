@@ -30,6 +30,12 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const setProfile = (profile) => {
+    const next = { ...user, ...profile };
+    setUser(next);
+    localStorage.setItem("user", JSON.stringify(next));
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -41,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, user, isAuthenticated, register, login, logout }}
+      value={{ token, user, isAuthenticated, register, login, setProfile, logout }}
     >
       {children}
     </AuthContext.Provider>

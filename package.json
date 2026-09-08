@@ -4,8 +4,10 @@
   "description": "Student Notes Manager - Full Stack",
   "private": true,
   "scripts": {
-    "start:backend": "cd backend\\server && node server.js",
-    "start:frontend": "cd frontend\\client && npm start",
+    "start": "cd frontend\\client && npm start",
+    "backend": "cd backend\\server && node server.js",
+    "frontend": "cd frontend\\client && npm start",
+    "db:setup": "cd backend\\server && npx prisma migrate deploy",
     "install:backend": "cd backend\\server && npm install",
     "install:frontend": "cd frontend\\client && npm install",
     "install:all": "npm run install:backend && npm run install:frontend"

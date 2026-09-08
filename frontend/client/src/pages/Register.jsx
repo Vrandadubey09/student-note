@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { UserPlus, User, Mail, Lock, BookOpen, CheckCircle2 } from "lucide-react";
 
 const Register = () => {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +22,9 @@ const Register = () => {
     try {
       const res = await register(name, email, password);
       setSuccess(
-        res.data?.message ||
-          "Registration successful! Check your email to verify your account."
+        res.data?.message || "Registration successful! You can now log in."
       );
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
@@ -53,16 +54,7 @@ const Register = () => {
           {success && (
             <div className="mb-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700 flex items-start gap-2">
               <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-              <div>
-                <p>{success}</p>
-                <p className="mt-1 text-xs text-emerald-600">
-                  Didn't get the email? Check your spam folder, then{" "}
-                  <Link to="/login" className="font-medium underline">
-                    go to login
-                  </Link>{" "}
-                  after verifying.
-                </p>
-              </div>
+              <p>{success}</p>
             </div>
           )}
 
@@ -140,12 +132,6 @@ const Register = () => {
             </form>
           )}
         </div>
-
-        {!success && (
-          <p className="text-center text-xs text-gray-400 mt-6">
-            We'll send a verification link to your email address.
-          </p>
-        )}
       </div>
     </div>
   );

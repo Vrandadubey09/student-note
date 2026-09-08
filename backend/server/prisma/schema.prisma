@@ -1,0 +1,63 @@
+// Prisma schema for Student Notes Manager
+// SQLite is used for storage - no external DB required.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(cuid())
+  name     String
+  email    String   @unique
+  password String
+  course   String?
+  semester String?
+  examDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subjects Subject[]
+  notes    Note[]
+}
+
+model Subject {
+  id    String @id @default(cuid())
+  name  String
+  color String @default("#6366f1")
+  icon  String @default("book")
+
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes Note[]
+
+  @@unique([userId, name])
+}
+
+model Note {
+  id      String @id @default(cuid())
+  title   String
+  content String @default("")
+  // Markdown content stored as text
+
+  subjectId String
+
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

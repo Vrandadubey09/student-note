@@ -1,10 +1,18 @@
-const Note = require("../models/Note");
+const prisma = require("../prisma/prisma");
 
 const getNotes = async (req, res, next) => {
   try {
-    const notes = await Note.find({ user: req.user._id }).sort({
-      createdAt: -1,
+    const { subject } = req.query;
+
+    const notes = await prisma.note.findMany({
+      where: {
+        userId: req.user.id,
+        ...(subject ? { subjectId: subject } : {}),
+      },
+      include: { subject: true },
+      orderBy: { updatedAt: "desc" },
     });
+
     res.json(notes);
   } catch (error) {
     next(error);
@@ -13,9 +21,9 @@ const getNotes = async (req, res, next) => {
 
 const getNoteById = async (req, res, next) => {
   try {
-    const note = await Note.findOne({
-      _id: req.params.id,
-      user: req.user._id,
+    const note = await prisma.note.findFirst({
+      where: { id: req.params.id, userId: req.user.id },
+      include: { subject: true },
     });
 
     if (!note) {
@@ -30,19 +38,32 @@ const getNoteById = async (req, res, next) => {
 
 const createNote = async (req, res, next) => {
   try {
-    const { title, content, subject } = req.body;
+    const { title, content, subjectId } = req.body;
 
-    if (!title || !content) {
-      return res
-        .status(400)
-        .json({ message: "Title and content are required" });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: "Title is required" });
     }
 
-    const note = await Note.create({
-      title,
-      content,
-      subject,
-      user: req.user._id,
+    if (!subjectId) {
+      return res.status(400).json({ message: "Subject is required" });
+    }
+
+    const subject = await prisma.subject.findFirst({
+      where: { id: subjectId, userId: req.user.id },
+    });
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
+
+    const note = await prisma.note.create({
+      data: {
+        title: title.trim(),
+        content: content || "",
+        subjectId,
+        userId: req.user.id,
+      },
+      include: { subject: true },
     });
 
     res.status(201).json(note);
@@ -53,17 +74,35 @@ const createNote = async (req, res, next) => {
 
 const updateNote = async (req, res, next) => {
   try {
-    const { title, content, subject } = req.body;
+    const { id } = req.params;
+    const { title, content, subjectId } = req.body;
 
-    const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      { title, content, subject },
-      { new: true, runValidators: true }
-    );
+    const existing = await prisma.note.findFirst({
+      where: { id, userId: req.user.id },
+    });
 
-    if (!note) {
+    if (!existing) {
       return res.status(404).json({ message: "Note not found" });
     }
+
+    if (subjectId) {
+      const subject = await prisma.subject.findFirst({
+        where: { id: subjectId, userId: req.user.id },
+      });
+      if (!subject) {
+        return res.status(404).json({ message: "Subject not found" });
+      }
+    }
+
+    const note = await prisma.note.update({
+      where: { id },
+      data: {
+        title: title && title.trim() ? title.trim() : existing.title,
+        content: content !== undefined ? content : existing.content,
+        subjectId: subjectId || existing.subjectId,
+      },
+      include: { subject: true },
+    });
 
     res.json(note);
   } catch (error) {
@@ -73,16 +112,19 @@ const updateNote = async (req, res, next) => {
 
 const deleteNote = async (req, res, next) => {
   try {
-    const note = await Note.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user._id,
+    const { id } = req.params;
+
+    const existing = await prisma.note.findFirst({
+      where: { id, userId: req.user.id },
     });
 
-    if (!note) {
+    if (!existing) {
       return res.status(404).json({ message: "Note not found" });
     }
 
-    res.json({ message: "Note deleted successfully", _id: note._id });
+    await prisma.note.delete({ where: { id } });
+
+    res.json({ message: "Note deleted successfully" });
   } catch (error) {
     next(error);
   }

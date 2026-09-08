@@ -1,30 +1,32 @@
 {
   "name": "student-notes-manager-server",
   "version": "1.0.0",
-  "description": "Backend for a Student Notes Manager with JWT auth and email verification",
+  "description": "Backend for a Student Notes Manager with JWT auth",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "keywords": [
     "express",
-    "mongodb",
-    "mongoose",
-    "jwt",
-    "nodemailer"
+    "sqlite",
+    "prisma",
+    "jwt"
   ],
   "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.0",
-    "nodemailer": "^6.9.16"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "prisma": "^6.19.3"
   }
 }

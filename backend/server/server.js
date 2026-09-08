@@ -3,12 +3,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const noteRoutes = require("./routes/noteRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
+const userRoutes = require("./routes/userRoutes");
 const errorHandler = require("./middleware/errorHandler");
-
-connectDB();
 
 const app = express();
 
@@ -21,6 +20,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(errorHandler);
 

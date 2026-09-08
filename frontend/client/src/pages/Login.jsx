@@ -99,10 +99,6 @@ const Login = () => {
             </button>
           </form>
         </div>
-
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Haven't verified your email yet? Check your inbox for the verification link.
-        </p>
       </div>
     </div>
   );
