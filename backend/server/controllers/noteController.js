@@ -1,4 +1,9 @@
+const fs = require("fs");
+const path = require("path");
 const prisma = require("../prisma/prisma");
+const { uploadDir } = require("../middleware/upload");
+
+const notesInclude = { subject: true, files: true };
 
 const getNotes = async (req, res, next) => {
   try {
@@ -9,7 +14,7 @@ const getNotes = async (req, res, next) => {
         userId: req.user.id,
         ...(subject ? { subjectId: subject } : {}),
       },
-      include: { subject: true },
+      include: notesInclude,
       orderBy: { updatedAt: "desc" },
     });
 
@@ -23,7 +28,7 @@ const getNoteById = async (req, res, next) => {
   try {
     const note = await prisma.note.findFirst({
       where: { id: req.params.id, userId: req.user.id },
-      include: { subject: true },
+      include: notesInclude,
     });
 
     if (!note) {
@@ -63,7 +68,7 @@ const createNote = async (req, res, next) => {
         subjectId,
         userId: req.user.id,
       },
-      include: { subject: true },
+      include: { subject: true, files: true },
     });
 
     res.status(201).json(note);
@@ -101,7 +106,7 @@ const updateNote = async (req, res, next) => {
         content: content !== undefined ? content : existing.content,
         subjectId: subjectId || existing.subjectId,
       },
-      include: { subject: true },
+      include: { subject: true, files: true },
     });
 
     res.json(note);
@@ -116,11 +121,19 @@ const deleteNote = async (req, res, next) => {
 
     const existing = await prisma.note.findFirst({
       where: { id, userId: req.user.id },
+      include: { files: true },
     });
 
     if (!existing) {
       return res.status(404).json({ message: "Note not found" });
     }
+
+    existing.files.forEach((f) => {
+      const absPath = path.join(uploadDir, path.basename(f.path));
+      if (fs.existsSync(absPath)) {
+        fs.unlinkSync(absPath);
+      }
+    });
 
     await prisma.note.delete({ where: { id } });
 

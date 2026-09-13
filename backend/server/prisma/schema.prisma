@@ -24,6 +24,7 @@ model User {
 
   subjects Subject[]
   notes    Note[]
+  files    File[]
 }
 
 model Subject {
@@ -58,6 +59,24 @@ model Note {
 
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files   File[]
 
+  @@index([userId])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  noteId    String
+  userId    String
+  name      String // original file name
+  path      String // serving path, e.g. /uploads/xxx.pdf
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
   @@index([userId])
 }

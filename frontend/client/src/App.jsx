@@ -12,6 +12,7 @@ import Subjects from "./pages/Subjects";
 import Notes from "./pages/Notes";
 import NoteEditor from "./pages/NoteEditor";
 import NoteDetail from "./pages/NoteDetail";
+import FileManager from "./pages/FileManager";
 import Settings from "./pages/Settings";
 
 const App = () => {
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/notes/new" element={<NoteEditor />} />
             <Route path="/notes/:id" element={<NoteDetail />} />
             <Route path="/notes/:id/edit" element={<NoteEditor />} />
+            <Route path="/files" element={<FileManager />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

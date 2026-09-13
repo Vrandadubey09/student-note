@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   FolderOpen,
   FileText,
+  Files,
   Settings,
   LogOut,
   BookOpen,
@@ -16,6 +17,7 @@ const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/subjects", label: "Subjects", icon: FolderOpen },
   { to: "/notes", label: "Notes", icon: FileText },
+  { to: "/files", label: "Files", icon: Files },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

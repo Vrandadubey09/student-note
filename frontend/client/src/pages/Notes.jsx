@@ -10,6 +10,7 @@ import {
   FileText,
   Pencil,
   Trash2,
+  Paperclip,
 } from "lucide-react";
 
 export default function Notes() {
@@ -174,6 +175,12 @@ export default function Notes() {
                       >
                         {Icon && <Icon size={11} className="shrink-0" />}
                         <span className="truncate">{subject.name}</span>
+                      </span>
+                    )}
+                    {note.files?.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+                        <Paperclip size={11} />
+                        {note.files.length}
                       </span>
                     )}
                   </div>

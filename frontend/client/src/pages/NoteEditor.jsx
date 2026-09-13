@@ -1,8 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import { renderMarkdown } from "../utils/markdown";
-import { Loader2, ArrowLeft, Save, Eye, FilePenLine } from "lucide-react";
+import { formatBytes } from "../utils/formatBytes";
+import {
+  Loader2,
+  ArrowLeft,
+  Save,
+  Eye,
+  FilePenLine,
+  Paperclip,
+  FileText,
+  X,
+} from "lucide-react";
 
 const editorCls =
   "w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 font-mono";
@@ -20,6 +30,9 @@ export default function NoteEditor() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     api
@@ -37,11 +50,32 @@ export default function NoteEditor() {
           setTitle(res.data.title || "");
           setSubjectId(res.data.subjectId || "");
           setContent(res.data.content || "");
+          setExistingFiles(res.data.files || []);
         })
         .catch((err) => setError(err.response?.data?.message || "Failed to load note"))
         .finally(() => setLoading(false));
     }
   }, [id, isEdit]);
+
+  const handleFilesSelected = (list) => {
+    const selected = Array.from(list || []);
+    setFiles((prev) => [...prev, ...selected]);
+  };
+
+  const removeFile = (index) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadNewFiles = async (noteId) => {
+    if (files.length === 0) return;
+    await Promise.all(
+      files.map((file) => {
+        const formData = new FormData();
+        formData.append("files", file);
+        return api.post(`/notes/${noteId}/files`, formData);
+      })
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,12 +92,13 @@ export default function NoteEditor() {
     try {
       if (isEdit) {
         await api.put(`/notes/${id}`, { title: title.trim(), subjectId, content });
+        await uploadNewFiles(id);
+        navigate(`/notes/${id}`);
       } else {
         const res = await api.post("/notes", { title: title.trim(), subjectId, content });
+        await uploadNewFiles(res.data.id);
         navigate(`/notes/${res.data.id}`, { replace: true });
-        return;
       }
-      navigate(`/notes/${id}`);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save note");
       setSaving(false);
@@ -180,6 +215,73 @@ export default function NoteEditor() {
                 rows={12}
                 className={editorCls}
               />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Attachments
+            </label>
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleFilesSelected(e.dataTransfer.files);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-1.5 px-4 py-6 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 text-center cursor-pointer hover:border-gray-300 hover:bg-gray-100 transition-colors"
+            >
+              <Paperclip size={20} className="text-gray-400" />
+              <span className="text-sm text-gray-500">
+                Drop files here or{" "}
+                <span className="text-gray-900 font-medium">browse</span>
+              </span>
+              <span className="text-xs text-gray-400">
+                Any file type — PDFs, images, documents (max 50 MB each)
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  handleFilesSelected(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            {existingFiles.length > 0 && isEdit && (
+              <div className="mt-2 text-xs text-gray-400">
+                {existingFiles.length} attachment{existingFiles.length === 1 ? "" : "s"} already on this note.
+              </div>
+            )}
+
+            {files.length > 0 && (
+              <ul className="mt-3 flex flex-col gap-2">
+                {files.map((file, i) => (
+                  <li
+                    key={`${file.name}-${file.lastModified}-${i}`}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl border border-gray-200 bg-white"
+                  >
+                    <FileText size={16} className="text-gray-400 shrink-0" />
+                    <span className="flex-1 min-w-0 text-sm text-gray-700 truncate">
+                      {file.name}
+                    </span>
+                    <span className="text-xs text-gray-400 shrink-0">
+                      {formatBytes(file.size)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <X size={15} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
