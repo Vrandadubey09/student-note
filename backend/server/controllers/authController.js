@@ -4,7 +4,7 @@ const { generateAuthToken } = require("../utils/generateToken");
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, course, semester } = req.body;
 
     if (!name || !email || !password) {
       return res
@@ -12,8 +12,16 @@ const register = async (req, res, next) => {
         .json({ message: "Please provide name, email and password" });
     }
 
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: cleanEmail },
     });
 
     if (existingUser) {
@@ -25,16 +33,40 @@ const register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
-        name,
-        email: email.toLowerCase(),
+        name: name.trim(),
+        email: cleanEmail,
         password: hashedPassword,
+        course: course ? course.trim() : null,
+        semester: semester ? semester.trim() : null,
       },
     });
 
+    try {
+      await prisma.subject.create({
+        data: {
+          name: "General Notes",
+          color: "#6366f1",
+          icon: "book",
+          userId: user.id,
+        },
+      });
+    } catch (subErr) {
+      console.warn("Could not create default starter subject:", subErr.message);
+    }
+
+    const token = generateAuthToken(user.id);
+
     res.status(201).json({
-      message: "Registration successful. You can now log in.",
+      message: "Registration successful!",
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      course: user.course,
+      semester: user.semester,
+      examDate: user.examDate,
+      token,
     });
   } catch (error) {
     next(error);

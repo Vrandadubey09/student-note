@@ -1,4 +1,7 @@
+const fs = require("fs");
+const path = require("path");
 const prisma = require("../prisma/prisma");
+const { uploadDir } = require("../middleware/upload");
 
 const SUBJECT_ICONS = ["book", "flask", "calculator", "globe", "music", "paintbrush", "dumbbell", "landmark"];
 const SUBJECT_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
@@ -109,10 +112,27 @@ const deleteSubject = async (req, res, next) => {
 
     const existing = await prisma.subject.findFirst({
       where: { id, userId: req.user.id },
+      include: { notes: { include: { files: true } } },
     });
 
     if (!existing) {
       return res.status(404).json({ message: "Subject not found" });
+    }
+
+    if (existing.notes && existing.notes.length > 0) {
+      const noteIds = existing.notes.map((n) => n.id);
+      existing.notes.forEach((n) => {
+        if (n.files) {
+          n.files.forEach((f) => {
+            const absPath = path.join(uploadDir, path.basename(f.path));
+            if (fs.existsSync(absPath)) {
+              fs.unlinkSync(absPath);
+            }
+          });
+        }
+      });
+      await prisma.file.deleteMany({ where: { noteId: { in: noteIds } } });
+      await prisma.note.deleteMany({ where: { subjectId: id } });
     }
 
     await prisma.subject.delete({ where: { id } });

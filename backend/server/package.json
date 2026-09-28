@@ -27,6 +27,7 @@
     "multer": "^2.3.0"
   },
   "devDependencies": {
+    "mongodb": "^7.6.0",
     "nodemon": "^3.1.7",
     "prisma": "^6.19.3"
   }

@@ -113,17 +113,8 @@ export default function FileManager() {
             const isImage = isFileImage(file);
             const subject = file.note?.subject;
             const SubjectIcon = subject ? getSubjectIcon(subject.icon) : null;
-const handleDelete = async (file) => {
-    if (!window.confirm(`Delete "${file.name}"?`)) return;
-    try {
-      await api.delete(`/files/${file.id}`);
-      setFiles((prev) => prev.filter((x) => x.id !== file.id));
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete file");
-    }
-  };
 
-  return (
+            return (
               <li
                 key={file.id}
                 className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/50 transition-colors"

@@ -10,6 +10,13 @@ const errorHandler = (err, req, res, next) => {
     message = `Invalid ${err.path}: ${err.value}`;
   }
 
+  // Prisma Unique Constraint Violation
+  if (err.code === "P2002") {
+    statusCode = 400;
+    const target = Array.isArray(err.meta?.target) ? err.meta.target.join(", ") : "Field";
+    message = `${target} already exists`;
+  }
+
   if (err.code === 11000) {
     statusCode = 400;
     const field = Object.keys(err.keyValue)[0];

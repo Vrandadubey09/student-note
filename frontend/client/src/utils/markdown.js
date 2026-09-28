@@ -36,10 +36,6 @@ function inline(text) {
   return t;
 }
 
-const inlineRegex = new RegExp(
-  escapeRegex("**") + "|" + escapeRegex("*") + "|" + escapeRegex("`") + "|" + /\[/.source
-);
-
 export function renderMarkdown(md) {
   if (!md) return "<p></p>";
 
@@ -60,12 +56,11 @@ export function renderMarkdown(md) {
 
     // Code block fences
     if (/^\s*```/.test(line)) {
-      if (codeBlock) {
-        html.push(`</pre>`);
+      if (codeBlock !== null) {
+        html.push(`<pre><code>${codeBlock.replace(/\n$/, "")}</code></pre>`);
         codeBlock = null;
       } else {
         flushList();
-        html.push(`<pre>`);
         codeBlock = "";
       }
       continue;
@@ -130,7 +125,7 @@ export function renderMarkdown(md) {
   }
 
   if (codeBlock !== null) {
-    html.push(`</pre>`);
+    html.push(`<pre><code>${codeBlock.replace(/\n$/, "")}</code></pre>`);
   }
   flushList();
 

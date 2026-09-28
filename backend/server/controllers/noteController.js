@@ -128,12 +128,15 @@ const deleteNote = async (req, res, next) => {
       return res.status(404).json({ message: "Note not found" });
     }
 
-    existing.files.forEach((f) => {
-      const absPath = path.join(uploadDir, path.basename(f.path));
-      if (fs.existsSync(absPath)) {
-        fs.unlinkSync(absPath);
-      }
-    });
+    if (existing.files && existing.files.length > 0) {
+      existing.files.forEach((f) => {
+        const absPath = path.join(uploadDir, path.basename(f.path));
+        if (fs.existsSync(absPath)) {
+          fs.unlinkSync(absPath);
+        }
+      });
+      await prisma.file.deleteMany({ where: { noteId: id } });
+    }
 
     await prisma.note.delete({ where: { id } });
 
