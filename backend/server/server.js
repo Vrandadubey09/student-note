@@ -32,17 +32,21 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.warn(`Port ${PORT} is in use, trying ${PORT + 1}...`);
-    app.listen(PORT + 1, () => {
-      console.log(`Server running on port ${PORT + 1}`);
-    });
-  } else {
-    throw err;
-  }
-});
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.warn(`Port ${PORT} is in use, trying ${PORT + 1}...`);
+      app.listen(PORT + 1, () => {
+        console.log(`Server running on port ${PORT + 1}`);
+      });
+    } else {
+      throw err;
+    }
+  });
+}
+
+module.exports = app;
