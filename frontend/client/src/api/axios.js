@@ -1,7 +1,24 @@
 import axios from "axios";
 
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const envUrl = import.meta.env.VITE_API_URL;
+const isValidEnvUrl =
+  envUrl &&
+  !envUrl.includes("<your-backend") &&
+  !envUrl.includes("EXAMPLE");
+
+const baseURL = isValidEnvUrl
+  ? envUrl
+  : isLocal
+  ? "http://localhost:5000/api"
+  : "https://student-note-api.vercel.app/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL,
 });
 
 api.interceptors.request.use(
