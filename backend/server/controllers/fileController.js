@@ -1,7 +1,4 @@
-const fs = require("fs");
-const path = require("path");
 const prisma = require("../prisma/prisma");
-const { uploadDir } = require("../middleware/upload");
 
 const getFiles = async (req, res, next) => {
   try {
@@ -30,30 +27,30 @@ const addFilesToNote = async (req, res, next) => {
     });
 
     if (!note) {
-      req.files.forEach((f) => fs.unlinkSync(path.join(uploadDir, f.filename)));
       return res.status(404).json({ message: "Note not found" });
     }
 
-    const records = req.files.map((f) =>
-      prisma.file.create({
+    const records = req.files.map((f) => {
+      const mime = f.mimetype || "application/octet-stream";
+      // Convert in-memory buffer to base64 Data URI for serverless compatibility
+      const dataUri = `data:${mime};base64,${f.buffer.toString("base64")}`;
+
+      return prisma.file.create({
         data: {
           noteId: id,
           userId: req.user.id,
           name: f.originalname,
-          path: `/uploads/${f.filename}`,
-          mimeType: f.mimetype || "application/octet-stream",
+          path: dataUri,
+          mimeType: mime,
           size: f.size,
         },
-      })
-    );
+      });
+    });
 
     const created = await Promise.all(records);
 
     res.status(201).json(created);
   } catch (error) {
-    if (req.files) {
-      req.files.forEach((f) => fs.unlinkSync(path.join(uploadDir, f.filename)));
-    }
     next(error);
   }
 };
@@ -66,11 +63,6 @@ const deleteFile = async (req, res, next) => {
 
     if (!file) {
       return res.status(404).json({ message: "File not found" });
-    }
-
-    const absPath = path.join(uploadDir, path.basename(file.path));
-    if (fs.existsSync(absPath)) {
-      fs.unlinkSync(absPath);
     }
 
     await prisma.file.delete({ where: { id: file.id } });

@@ -1,7 +1,4 @@
-const fs = require("fs");
-const path = require("path");
 const prisma = require("../prisma/prisma");
-const { uploadDir } = require("../middleware/upload");
 
 const notesInclude = { subject: true, files: true };
 
@@ -129,12 +126,6 @@ const deleteNote = async (req, res, next) => {
     }
 
     if (existing.files && existing.files.length > 0) {
-      existing.files.forEach((f) => {
-        const absPath = path.join(uploadDir, path.basename(f.path));
-        if (fs.existsSync(absPath)) {
-          fs.unlinkSync(absPath);
-        }
-      });
       await prisma.file.deleteMany({ where: { noteId: id } });
     }
 

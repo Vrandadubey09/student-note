@@ -3,6 +3,15 @@ import api from "../api/axios";
 const API_ORIGIN = (api.defaults.baseURL || "").replace(/\/api$/, "");
 
 export function fileUrl(path) {
+  if (!path) return "";
+  if (
+    path.startsWith("data:") ||
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("blob:")
+  ) {
+    return path;
+  }
   return `${API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
